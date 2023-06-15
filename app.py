@@ -22,8 +22,8 @@ def optimize():
 
     pmed = PMedianProblem('ATM', data['p'], data['distances'], data['locations'])
     optimal_choices = pmed.solve()
-
-    return json.dumps(optimal_choices)
+    result = json.dumps(optimal_choices)
+    return result
 
 
 if __name__ == "__main__":
