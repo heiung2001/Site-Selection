@@ -1,8 +1,10 @@
 import mip
 from pprint import pprint
 import pandas as pd
+import numpy as np
 from mip import Model, xsum
 from typing import Dict
+from collections import defaultdict as ddict
 
 
 CRITERIAS = {
@@ -52,7 +54,6 @@ class PMedianProblem:
         self.m = data_dict['atm']
         self.n = data_dict['area']
         self.location_score = data_dict['location_score']
-        pprint(self.D)
 
         self.model = Model(name=name, sense=mip.MINIMIZE, solver_name='CBC')
 
@@ -81,13 +82,19 @@ class PMedianProblem:
         self.model.verbose = verbose
         self.model.optimize()
         if self.model.num_solutions:
-            result = [i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99]
-            # print("Number of Solutions:", self.model.num_solutions)
-            # print(selected)
+            selected = set([i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99])
 
-            # other_areas = self.J - set(selected)
-            # for area in other_areas:
-            #     pass
+            atm2demand = ddict(list)
+            for i in self.I.difference(selected):
+                assign = None
+                smallest_distance = float('inf')
+                for j in selected:
+                    if self.D[i][j] < smallest_distance:
+                        smallest_distance = self.D[i][j]
+                        assign = j
+                assert assign is not None, "assign to None"
+                atm2demand[assign].append(i)
+            result = atm2demand
         else:
             result = "No Solution Found!"
         return result
@@ -143,148 +150,5 @@ class PMedianProblem:
 #     with open('data.json', 'r') as f:
 #         data = json.load(f)
 #
-#     # data = preprocess(data['p'], data['distances'])
-#     LOCATIONS = {
-#              "0": {"company_agr": 2,
-#                  "competitor_ext": 4,
-#                  "cost_of_installing_atm": 12000,
-#                  "ease_of_access": 3,
-#                  "economic_soc_level": 5000,
-#                  "high_visibility": 10,
-#                  "security": 10},
-#              "1": {"company_agr": 5,
-#                  "competitor_ext": 7,
-#                  "cost_of_installing_atm": 30000,
-#                  "ease_of_access": 4,
-#                  "economic_soc_level": 7000,
-#                  "high_visibility": 2,
-#                  "security": 5},
-#              "2": {"company_agr": 3,
-#                  "competitor_ext": 11,
-#                  "cost_of_installing_atm": 70000,
-#                  "ease_of_access": 7,
-#                  "economic_soc_level": 12000,
-#                  "high_visibility": 6,
-#                  "security": 40},
-#              "3": {"company_agr": 2,
-#                  "competitor_ext": 13,
-#                  "cost_of_installing_atm": 80000,
-#                  "ease_of_access": 1,
-#                  "economic_soc_level": 3500,
-#                  "high_visibility": 5,
-#                  "security": 70},
-#              "4": {"company_agr": 1,
-#                  "competitor_ext": 20,
-#                  "cost_of_installing_atm": 20000,
-#                  "ease_of_access": 2,
-#                  "economic_soc_level": 1500,
-#                  "high_visibility": 8,
-#                  "security": 14},
-#              "5": {"company_agr": 3,
-#                  "competitor_ext": 9,
-#                  "cost_of_installing_atm": 45000,
-#                  "ease_of_access": 1,
-#                  "economic_soc_level": 700,
-#                  "high_visibility": 30,
-#                  "security": 8},
-#              "6": {"company_agr": 5,
-#                  "competitor_ext": 20,
-#                  "cost_of_installing_atm": 60000,
-#                  "ease_of_access": 4,
-#                  "economic_soc_level": 12000,
-#                  "high_visibility": 1,
-#                  "security": 2},
-#              "7": {"company_agr": 0,
-#                  "competitor_ext": 10,
-#                  "cost_of_installing_atm": 100000,
-#                  "ease_of_access": 1,
-#                  "economic_soc_level": 3500,
-#                  "high_visibility": 40,
-#                  "security": 9},
-#              "8": {"company_agr": 1,
-#                  "competitor_ext": 12,
-#                  "cost_of_installing_atm": 23000,
-#                  "ease_of_access": 3,
-#                  "economic_soc_level": 8400,
-#                  "high_visibility": 25,
-#                  "security": 11},
-#              "9": {"company_agr": 5,
-#                  "competitor_ext": 0,
-#                  "cost_of_installing_atm": 50000,
-#                  "ease_of_access": 1,
-#                  "economic_soc_level": 1000,
-#                  "high_visibility": 11,
-#                  "security": 23},
-#              "10": {"company_agr": 3,
-#                   "competitor_ext": 3,
-#                   "cost_of_installing_atm": 40091,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 3012,
-#                   "high_visibility": 3,
-#                   "security": 3},
-#              "11": {"company_agr": 2,
-#                   "competitor_ext": 2,
-#                   "cost_of_installing_atm": 18696,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 4240,
-#                   "high_visibility": 10,
-#                   "security": 5},
-#              "12": {"company_agr": 4,
-#                   "competitor_ext": 5,
-#                   "cost_of_installing_atm": 41866,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 10802,
-#                   "high_visibility": 16,
-#                   "security": 8},
-#              "13": {"company_agr": 0,
-#                   "competitor_ext": 3,
-#                   "cost_of_installing_atm": 42192,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 10854,
-#                   "high_visibility": 9,
-#                   "security": 2},
-#              "14": {"company_agr": 3,
-#                   "competitor_ext": 8,
-#                   "cost_of_installing_atm": 35671,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 7290,
-#                   "high_visibility": 1,
-#                   "security": 16},
-#              "15": {"company_agr": 5,
-#                   "competitor_ext": 7,
-#                   "cost_of_installing_atm": 34292,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 1889,
-#                   "high_visibility": 2,
-#                   "security": 9},
-#              "16": {"company_agr": 3,
-#                   "competitor_ext": 10,
-#                   "cost_of_installing_atm": 12671,
-#                   "ease_of_access": 2,
-#                   "economic_soc_level": 2402,
-#                   "high_visibility": 13,
-#                   "security": 4},
-#              "17": {"company_agr": 1,
-#                   "competitor_ext": 1,
-#                   "cost_of_installing_atm": 19616,
-#                   "ease_of_access": 1,
-#                   "economic_soc_level": 10527,
-#                   "high_visibility": 6,
-#                   "security": 2},
-#              "18": {"company_agr": 5,
-#                   "competitor_ext": 2,
-#                   "cost_of_installing_atm": 48230,
-#                   "ease_of_access": 5,
-#                   "economic_soc_level": 10524,
-#                   "high_visibility": 5,
-#                   "security": 18},
-#              "19": {"company_agr": 4,
-#                   "competitor_ext": 5,
-#                   "cost_of_installing_atm": 45296,
-#                   "ease_of_access": 8,
-#                   "economic_soc_level": 6599,
-#                   "high_visibility": 8,
-#                   "security": 8}
-#             }
 #     pmed = PMedianProblem('ATM', data['p'], data['distances'], LOCATIONS)
 #     pmed.solve()
