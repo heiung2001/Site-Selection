@@ -20,7 +20,7 @@ def optimize():
 
     task_id = data['meta']['task_id']
 
-    pmed = PMedianProblem('ATM', data['p'], data['distances'], data['locations'])
+    pmed = PMedianProblem('ATM', data['p'], data['distances'], data['locations'], data['criterias'])
     optimal_choices = pmed.solve()
     result = json.dumps(optimal_choices)
     return result

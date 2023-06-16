@@ -1,4 +1,5 @@
 import mip
+import json
 from pprint import pprint
 import pandas as pd
 import numpy as np
@@ -7,46 +8,15 @@ from typing import Dict
 from collections import defaultdict as ddict
 
 
-CRITERIAS = {
-    "high_visibility": {
-        "weight": 0.18,
-        "attr": 'more'
-    },
-    "security": {
-        "weight": 0.3,
-        "attr": 'less'
-    },
-    "competitor_ext": {
-        "weight": 0.1,
-        "attr": 'more'
-    },
-    "economic_soc_level": {
-        "weight": 0.04,
-        "attr": 'more'
-    },
-    "ease_of_access": {
-        "weight": 0.2,
-        "attr": 'more'
-    },
-    "cost_of_installing_atm": {
-        "weight": 0.16,
-        "attr": 'less'
-    },
-    "company_agr": {
-        "weight": 0.02,
-        "attr": 'more'
-    },
-}
-
-
 class PMedianProblem:
     def __init__(self,
                  name: str,
                  p: int,
                  distances: Dict[str, Dict[str, float]],
-                 locations):
+                 locations,
+                 criterias):
 
-        data_dict = self.preprocess(p, distances, locations)
+        data_dict = self.preprocess(p, distances, locations, criterias)
         self.D = data_dict['distances']
         self.K = data_dict['limit']
         self.I = data_dict['demandSet']
@@ -82,7 +52,7 @@ class PMedianProblem:
         self.model.verbose = verbose
         self.model.optimize()
         if self.model.num_solutions:
-            selected = set([i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99])
+            selected = set(i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99)
 
             atm2demand = ddict(list)
             for i in self.I.difference(selected):
@@ -102,7 +72,8 @@ class PMedianProblem:
     @staticmethod
     def preprocess(p: int,
                    distances,
-                   locations: dict):
+                   locations: dict,
+                   criterias: dict):
 
         data_dict = dict()
 
@@ -114,13 +85,13 @@ class PMedianProblem:
             matrix.append(tmp)
 
         data_dict['distances'] = matrix
-        data_dict['atmSet']    = set([int(atm) for atm in distances.keys()])
-        data_dict['demandSet'] = set([int(demand) for demand in distances.keys()])
+        data_dict['atmSet']    = set(int(atm) for atm in distances.keys())
+        data_dict['demandSet'] = set(int(demand) for demand in distances.keys())
         data_dict['atm']   = int(p)
         data_dict['area']  = len(matrix)
         data_dict['limit'] = 100.0
 
-        df = pd.DataFrame(columns=list(CRITERIAS.keys()))
+        df = pd.DataFrame(columns=list(criterias.keys()))
         for location in locations.keys():
             tmp = [{crit: val for crit, val in locations[location].items()}]
             df = pd.concat([df, pd.DataFrame(tmp)], ignore_index=True)
@@ -129,16 +100,16 @@ class PMedianProblem:
             upper = df[crit_name].max()
             lower = df[crit_name].min()
 
-            if CRITERIAS[crit_name]['attr'] == 'more':
+            if criterias[crit_name]['attr'] == 'more':
                 df[crit_name] = 9 - 8 * (upper-df[crit_name])/(upper-lower)
-            elif CRITERIAS[crit_name]['attr'] == 'less':
+            elif criterias[crit_name]['attr'] == 'less':
                 df[crit_name] = 9 - 8 * (df[crit_name]-lower)/(upper-lower)
             else:
                 raise ValueError
 
         df['norm_score'] = 0
-        for criteria in CRITERIAS.keys():
-            crit_weight = CRITERIAS[criteria]['weight']
+        for criteria in criterias.keys():
+            crit_weight = criterias[criteria]['weight']
             df['norm_score'] += df[criteria] * crit_weight
         df['norm_score'] /= df['norm_score'].sum()
         data_dict['location_score'] = df['norm_score'].to_list()
@@ -146,9 +117,9 @@ class PMedianProblem:
         return data_dict
 
 
-# if __name__ == "__main__":
-#     with open('data.json', 'r') as f:
-#         data = json.load(f)
-#
-#     pmed = PMedianProblem('ATM', data['p'], data['distances'], LOCATIONS)
-#     pmed.solve()
+if __name__ == "__main__":
+    with open('datav2.json', 'r') as f:
+        data = json.load(f)
+
+    pmed = PMedianProblem('ATM', data['p'], data['distances'], data['locations'], data['criterias'])
+    pprint(pmed.solve(verbose=False))
