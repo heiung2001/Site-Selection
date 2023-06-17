@@ -54,7 +54,7 @@ class PMedianProblem:
         if self.model.num_solutions:
             selected = set(i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99)
 
-            atm2demand = ddict(list)
+            atm2demand = ddict(list, {k: [] for k in self.I})
             for i in self.I.difference(selected):
                 assign = None
                 smallest_distance = float('inf')
@@ -89,7 +89,7 @@ class PMedianProblem:
         data_dict['demandSet'] = set(int(demand) for demand in distances.keys())
         data_dict['atm']   = int(p)
         data_dict['area']  = len(matrix)
-        data_dict['limit'] = 100.0
+        data_dict['limit'] = 1000000.0
 
         df = pd.DataFrame(columns=list(criterias.keys()))
         for location in locations.keys():
