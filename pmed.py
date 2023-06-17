@@ -24,6 +24,7 @@ class PMedianProblem:
         self.m = data_dict['atm']
         self.n = data_dict['area']
         self.location_score = data_dict['location_score']
+        pprint(self.D)
 
         self.model = Model(name=name, sense=mip.MINIMIZE, solver_name='CBC')
 
@@ -54,7 +55,7 @@ class PMedianProblem:
         if self.model.num_solutions:
             selected = set(i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99)
 
-            atm2demand = ddict(list, {k: [] for k in self.I})
+            atm2demand = ddict(list, {k: [] for k in selected})
             for i in self.I.difference(selected):
                 assign = None
                 smallest_distance = float('inf')
