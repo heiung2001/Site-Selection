@@ -24,7 +24,6 @@ class PMedianProblem:
         self.m = data_dict['atm']
         self.n = data_dict['area']
         self.location_score = data_dict['location_score']
-        pprint(self.D)
 
         self.model = Model(name=name, sense=mip.MINIMIZE, solver_name='CBC')
 
@@ -90,7 +89,7 @@ class PMedianProblem:
         data_dict['demandSet'] = set(int(demand) for demand in distances.keys())
         data_dict['atm']   = int(p)
         data_dict['area']  = len(matrix)
-        data_dict['limit'] = 1000000.0
+        data_dict['limit'] = 3000.0
 
         df = pd.DataFrame(columns=list(criterias.keys()))
         for location in locations.keys():
