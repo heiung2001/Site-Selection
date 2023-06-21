@@ -55,15 +55,8 @@ class PMedianProblem:
             selected = set(i for i in range(len(self.Y)) if float(self.Y[i].x) >= 0.99)
 
             atm2demand = ddict(list, {k: [] for k in selected})
-            for i in self.I.difference(selected):
-                assign = None
-                smallest_distance = float('inf')
-                for j in selected:
-                    if self.D[i][j] < smallest_distance:
-                        smallest_distance = self.D[i][j]
-                        assign = j
-                assert assign is not None, "assign to None"
-                atm2demand[assign].append(i)
+            for atm in selected:
+                atm2demand[atm] = [j for j in range(len(self.X[atm])) if float(self.X[atm][j]) >= 0.99 and j != atm]
             result = atm2demand
         else:
             result = "No Solution Found!"
