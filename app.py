@@ -16,14 +16,17 @@ def index():
 @app.route('/api/internal/create', methods=['POST'])
 def optimize():
     # url = f"http://192.168.4.165:8000/api/tasks/{data['meta']['task_id']}"
+    result_dict = dict()
     data = request.json
 
     task_id = data['meta']['task_id']
 
     pmed = PMedianProblem('ATM', data['p'], data['distances'], data['locations'], data['criterias'])
     optimal_choices = pmed.solve()
-    result = json.dumps(optimal_choices)
-    return result
+
+    result_dict['result'] = json.dumps(optimal_choices)
+    result_dict['message'] = pmed.message
+    return result_dict
 
 
 if __name__ == "__main__":
