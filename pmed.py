@@ -9,6 +9,8 @@ from collections import defaultdict as ddict
 
 
 class PMedianProblem:
+    message = 'Success'
+
     def __init__(self,
                  name: str,
                  p: int,
@@ -89,20 +91,26 @@ class PMedianProblem:
         data_dict['limit'] = 1000000.0
 
         df = pd.DataFrame(columns=list(criterias.keys()))
-        for location in locations.keys():
-            tmp = [{crit: val for crit, val in locations[location].items()}]
-            df = pd.concat([df, pd.DataFrame(tmp)], ignore_index=True)
+        try:
+            for location in locations.keys():
+                tmp = [{crit: val for crit, val in locations[location].items()}]
+                df = pd.concat([df, pd.DataFrame(tmp)], ignore_index=True)
 
-        for crit_name in df:
-            upper = df[crit_name].max()
-            lower = df[crit_name].min()
+            for crit_name in df:
+                upper = df[crit_name].max()
+                lower = df[crit_name].min()
 
-            if criterias[crit_name]['attr'] == 'more':
-                df[crit_name] = 9 - 8 * (upper-df[crit_name])/(upper-lower)
-            elif criterias[crit_name]['attr'] == 'less':
-                df[crit_name] = 9 - 8 * (df[crit_name]-lower)/(upper-lower)
-            else:
-                raise ValueError
+                if criterias[crit_name]['attr'] == 'more':
+                    df[crit_name] = 9 - 8 * (upper-df[crit_name])/(upper-lower)
+                elif criterias[crit_name]['attr'] == 'less':
+                    df[crit_name] = 9 - 8 * (df[crit_name]-lower)/(upper-lower)
+                else:
+                    raise ValueError
+
+        except ZeroDivisionError:
+            PMedianProblem.message = 'Warning: Appear same value criteria for every location!'
+            for crit_name in df:
+                df[crit_name] = 1
 
         df['norm_score'] = 0
         for criteria in criterias.keys():
@@ -115,7 +123,7 @@ class PMedianProblem:
 
 
 if __name__ == "__main__":
-    with open('datav2.json', 'r') as f:
+    with open('data.json', 'r') as f:
         data = json.load(f)
 
     pmed = PMedianProblem('ATM', data['p'], data['distances'], data['locations'], data['criterias'])
