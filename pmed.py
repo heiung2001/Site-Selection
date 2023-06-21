@@ -27,17 +27,21 @@ class PMedianProblem:
 
         self.model = Model(name=name, sense=mip.MINIMIZE, solver_name='CBC')
 
-        self.X = [[self.model.add_var(name=f'X{i}{j}', var_type=mip.BINARY) for j in range(len(self.J))] for i in range(len(self.I))]
-        self.Y = [self.model.add_var(name=f'Y{i}', var_type=mip.BINARY) for i in range(len(self.I))]
+        self.X = [[self.model.add_var(name=f'X{i}{j}', var_type=mip.BINARY)
+                   for j in range(len(self.J))] for i in range(len(self.I))]
+        self.Y = [self.model.add_var(name=f'Y{i}', var_type=mip.BINARY)
+                  for i in range(len(self.I))]
 
-        self.model.objective = xsum(xsum(self.location_score[j] * self.D[i][j] * self.X[i][j] for j in range(len(self.J))) for i in range(len(self.I)))
+        self.model.objective = xsum(xsum(self.location_score[j] * self.D[i][j] * self.X[i][j]
+                                         for j in range(len(self.J))) for i in range(len(self.I)))
 
         self.model.add_constr(xsum(self.Y[i] for i in range(len(self.J))) == self.m, name=f'(1)')
         for j in range(len(self.J)):
             self.model.add_constr(xsum(self.X[i][j] for i in range(len(self.I))) == 1, name=f'(2)-{j}')
 
         for i in range(len(self.I)):
-            self.model.add_constr(xsum(self.X[i][j] for j in range(len(self.J))) <= len(self.J) * self.Y[i], name=f'(3)-{i}')
+            self.model.add_constr(xsum(self.X[i][j]
+                                       for j in range(len(self.J))) <= len(self.J) * self.Y[i], name=f'(3)-{i}')
 
         for i in range(len(self.I)):
             for j in range(len(self.J)):
